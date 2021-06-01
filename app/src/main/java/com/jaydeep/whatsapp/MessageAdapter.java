@@ -27,7 +27,17 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.List;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -36,6 +46,11 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     private List<Messages> userMessagesList;
     private FirebaseAuth fAuth;
     private DatabaseReference usersRef;
+
+    //new part
+    private byte encryptionKey[] = {9, 115, 51, 86, 105, 4, -31, -23, -68, 88, 17, 20, 3, -105, 119, -53};
+    private Cipher cipher, decipher;
+    private SecretKeySpec secretKeySpec = new SecretKeySpec(encryptionKey, "AES");
 
 
 
@@ -110,22 +125,45 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
         if(fromMessageType.equals("text")) {
 
-            if(fromUserID.equals(messageSenderID)) {
-                holder.senderMessageText.setVisibility(View.VISIBLE);
+//            usersRef = FirebaseDatabase.getInstance().getReference().child("Message").child(fromUserID).child(messageSenderID);
+            try {
+                try {
+                    cipher = Cipher.getInstance("AES");
+                    decipher = Cipher.getInstance("AES");
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                } catch (NoSuchPaddingException e) {
+                    e.printStackTrace();
+                }
 
-                holder.senderMessageText.setBackgroundResource(R.drawable.sender_messages_layout);
-                holder.senderMessageText.setTextColor(Color.BLACK);
-                holder.senderMessageText.setText(messages.getMessage() + "\n\n" + messages.getTime() + " - " + messages.getDate());
+
+                if (fromUserID.equals(messageSenderID)) {
+                    holder.senderMessageText.setVisibility(View.VISIBLE);
+
+                    holder.senderMessageText.setBackgroundResource(R.drawable.sender_messages_layout);
+                    holder.senderMessageText.setTextColor(Color.BLACK);
+                    try {
+                        holder.senderMessageText.setText(AESDecryptionMethod(messages.getMessage()) + "\n\n" + messages.getTime() + " - " + messages.getDate());
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+
+                    holder.receiverProfileImage.setVisibility(View.VISIBLE);
+                    holder.receiverMessageText.setVisibility(View.VISIBLE);
+
+                    holder.receiverMessageText.setBackgroundResource(R.drawable.receiver_messages_layout);
+                    holder.receiverMessageText.setTextColor(Color.BLACK);
+                    try {
+                        holder.receiverMessageText.setText(AESDecryptionMethod(messages.getMessage()) + "\n\n" + messages.getTime() + " - " + messages.getDate());
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+
+                }
             }
-            else {
-
-                holder.receiverProfileImage.setVisibility(View.VISIBLE);
-                holder.receiverMessageText.setVisibility(View.VISIBLE);
-
-                holder.receiverMessageText.setBackgroundResource(R.drawable.receiver_messages_layout);
-                holder.receiverMessageText.setTextColor(Color.BLACK);
-                holder.receiverMessageText.setText(messages.getMessage() + "\n\n" + messages.getTime() + " - " + messages.getDate());
-
+            catch (Exception e) {
+                e.printStackTrace();
             }
         }
         else if(fromMessageType.equals("image")) {
@@ -414,6 +452,52 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     @Override
     public int getItemCount() {
         return userMessagesList.size();
+    }
+
+    private String AESEncryptionMethod(String string){
+
+        byte[] stringByte = string.getBytes();
+        byte[] encryptedByte = new byte[stringByte.length];
+
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
+            encryptedByte = cipher.doFinal(stringByte);
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+
+        String returnString = null;
+
+        try {
+            returnString = new String(encryptedByte, "ISO-8859-1");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return returnString;
+    }
+
+    private String AESDecryptionMethod(String string) throws UnsupportedEncodingException {
+        byte[] EncryptedByte = string.getBytes("ISO-8859-1");
+        String decryptedString = string;
+
+        byte[] decryption;
+
+        try {
+            decipher.init(cipher.DECRYPT_MODE, secretKeySpec);
+            decryption = decipher.doFinal(EncryptedByte);
+            decryptedString = new String(decryption);
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+        return decryptedString;
     }
 
     private void deleteSentMessage(final int position, final MessageViewHolder holder) {

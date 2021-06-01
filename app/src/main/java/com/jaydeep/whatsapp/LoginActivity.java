@@ -49,16 +49,16 @@ public class LoginActivity extends AppCompatActivity {
 
         InitializeField();
 
-        Toolbar toolbar = findViewById(R.id.login_toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle("Login");
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-            }
-        });
+//        Toolbar toolbar = findViewById(R.id.login_toolbar);
+//        setSupportActionBar(toolbar);
+//        getSupportActionBar().setTitle("Login");
+//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+//        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                finish();
+//            }
+//        });
 
         NeedNewAccountLink.setOnClickListener(new View.OnClickListener() {
             @Override

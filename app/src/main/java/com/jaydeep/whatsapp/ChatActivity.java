@@ -43,12 +43,21 @@ import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -78,10 +87,18 @@ public class ChatActivity extends AppCompatActivity {
 
     private ProgressDialog loadingBar;
 
+    private byte encryptionKey[] = {9, 115, 51, 86, 105, 4, -31, -23, -68, 88, 17, 20, 3, -105, 119, -53};
+    private Cipher cipher, decipher;
+    private SecretKeySpec secretKeySpec;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
+
+
+            secretKeySpec = new SecretKeySpec(encryptionKey, "AES");
+
 
         messageReceiverID = getIntent().getExtras().get("visit_user_id").toString();
         messageReceiverName = getIntent().getExtras().get("visit_user_name").toString();
@@ -184,13 +201,28 @@ public class ChatActivity extends AppCompatActivity {
                 builder.show();
             }
         });
-
+        RootRef.child("Message").child(messageSenderID).child(messageReceiverID);
+        try {
+            cipher = Cipher.getInstance("AES");
+            decipher = Cipher.getInstance("AES");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        }
         RootRef.child("Message").child(messageSenderID).child(messageReceiverID)
                 .addChildEventListener(new ChildEventListener() {
                     @Override
                     public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                         Messages messages = snapshot.getValue(Messages.class);
 
+//                        //new part
+//                        String stringMessage =  messages.getMessage();
+//                        stringMessage = stringMessage.substring(1,stringMessage.length()-1);
+
+
+
+                        //old part
                         messagesList.add(messages);
                         messageAdapter.notifyDataSetChanged();
 
@@ -217,6 +249,24 @@ public class ChatActivity extends AppCompatActivity {
 
                     }
                 });
+//        RootRef.child("Message").child(messageSenderID).child(messageReceiverID)
+//                .addValueEventListener(new ValueEventListener() {
+//                    @Override
+//                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                        Messages messages = snapshot.getValue(Messages.class);
+//
+//                        messagesList.add(messages);
+//                        messageAdapter.notifyDataSetChanged();
+//
+//                        userMessageList.smoothScrollToPosition(userMessageList.getAdapter().getItemCount());
+//
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(@NonNull DatabaseError error) {
+//
+//                    }
+//                });
     }
 
 
@@ -247,43 +297,6 @@ public class ChatActivity extends AppCompatActivity {
 
                 final StorageReference filePath = storageReference.child(messagePushID + "." + checker);
 
-//                filePath.putFile(fileUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-//                    @Override
-//                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-//
-//                        if(task.isSuccessful()) {
-//                            Map messageTextBody = new HashMap();
-//                            messageTextBody.put("message", task.getResult().getUploadSessionUri().toString());
-//                            messageTextBody.put("name",fileUri.getLastPathSegment());
-//                            messageTextBody.put("type",checker);
-//                            messageTextBody.put("from",messageSenderID);
-//                            messageTextBody.put("to",messageReceiverID);
-//                            messageTextBody.put("messageID",messagePushID);
-//                            messageTextBody.put("time",saveCurrentTime);
-//                            messageTextBody.put("date",saveCurrentDate);
-//
-//                            Map messageBodyDetails = new HashMap();
-//                            messageBodyDetails.put(messageSenderRef + "/" + messagePushID, messageTextBody);
-//                            messageBodyDetails.put(messageReceiverRef + "/" + messagePushID, messageTextBody);
-//
-//                            RootRef.updateChildren(messageBodyDetails);
-//                            loadingBar.dismiss();
-//                        }
-//
-//                    }
-//                }).addOnFailureListener(new OnFailureListener() {
-//                    @Override
-//                    public void onFailure(@NonNull Exception e) {
-//                        loadingBar.dismiss();
-//                        Toast.makeText(ChatActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
-//                    }
-//                }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-//                    @Override
-//                    public void onProgress(@NonNull UploadTask.TaskSnapshot snapshot) {
-//                        double p = (100.0*snapshot.getBytesTransferred())/snapshot.getTotalByteCount();
-//                        loadingBar.setMessage((int) p  + " %  Uploading...");
-//                    }
-//                });
 
                 filePath.putFile(fileUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
@@ -401,6 +414,52 @@ public class ChatActivity extends AppCompatActivity {
             }
         }
     }
+    private String AESEncryptionMethod(String string){
+
+        byte[] stringByte = string.getBytes();
+        byte[] encryptedByte = new byte[stringByte.length];
+
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
+            encryptedByte = cipher.doFinal(stringByte);
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+
+        String returnString = null;
+
+        try {
+            returnString = new String(encryptedByte, "ISO-8859-1");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return returnString;
+    }
+
+    private String AESDecryptionMethod(String string) throws UnsupportedEncodingException {
+        byte[] EncryptedByte = string.getBytes("ISO-8859-1");
+        String decryptedString = string;
+
+        byte[] decryption;
+
+        try {
+            decipher.init(cipher.DECRYPT_MODE, secretKeySpec);
+            decryption = decipher.doFinal(EncryptedByte);
+            decryptedString = new String(decryption);
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+        return decryptedString;
+    }
+
 
     private void displayLastSeen() {
         RootRef.child("Users").child(messageReceiverID)
@@ -434,7 +493,8 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void SendMessage() {
-        String messageText = MessageInputText.getText().toString();
+        String messageText = null;
+        messageText = AESEncryptionMethod(MessageInputText.getText().toString());
 
         if(TextUtils.isEmpty(messageText)) {
             Toast.makeText(this, "Write Message", Toast.LENGTH_SHORT).show();

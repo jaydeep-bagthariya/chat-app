@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
@@ -7,13 +7,13 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="15dp"
+        android:layout_margin="10dp"
         android:orientation="horizontal">
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/user_profile_image"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="50dp"
+            android:layout_height="55dp"
             android:src="@drawable/profile_image" />
 
         <LinearLayout
@@ -54,36 +54,43 @@
                 android:textAlignment="textStart"
                 android:textSize="16sp"/>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:orientation="horizontal">-->
 
-                <Button
-                    android:id="@+id/request_accept_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="30dp"
-                    android:text="Accept"
-                    android:textSize="16sp"
-                    android:textAllCaps="false"
-                    android:background="@android:color/holo_green_dark"
-                    android:visibility="invisible"/>
-                <Button
-                    android:id="@+id/request_cancel_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="30dp"
-                    android:layout_marginStart="10dp"
-                    android:text="Cancel"
-                    android:textSize="16sp"
-                    android:textAllCaps="false"
-                    android:background="@android:color/holo_red_dark"
-                    android:textColor="@android:color/background_light"
-                    android:visibility="invisible"/>
+<!--                <Button-->
+<!--                    android:id="@+id/request_accept_btn"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="30dp"-->
+<!--                    android:text="Accept"-->
+<!--                    android:textSize="16sp"-->
+<!--                    android:textAllCaps="false"-->
+<!--                    android:background="@android:color/holo_green_dark"-->
+<!--                    android:visibility="invisible"/>-->
+<!--                <Button-->
+<!--                    android:id="@+id/request_cancel_btn"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="30dp"-->
+<!--                    android:layout_marginStart="10dp"-->
+<!--                    android:text="Cancel"-->
+<!--                    android:textSize="16sp"-->
+<!--                    android:textAllCaps="false"-->
+<!--                    android:background="@android:color/holo_red_dark"-->
+<!--                    android:textColor="@android:color/background_light"-->
+<!--                    android:visibility="invisible"/>-->
 
-            </LinearLayout>
+<!--            </LinearLayout>-->
 
         </LinearLayout>
-
-
     </LinearLayout>
-</RelativeLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#c0c0c0"
+        android:layout_marginTop="-5dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="65dp"/>
+
+
+</LinearLayout>
